@@ -129,6 +129,7 @@ class AlertPageViewController: UIViewController, UIPageViewControllerDataSource,
         pageContentViewController.labelDescription.font = alertview.fontDescriptionLabel
         pageContentViewController.labelDescription.text = arrayOfAlerts[realIndex].text
         pageContentViewController.labelDescription.textColor = alertview.colorDescriptionLabel
+        pageContentViewController.labelDescription.textAlignment = alertview.textAlignmentDescriptionLabel
         
         return pageContentViewController
     }
@@ -184,8 +185,6 @@ class AlertPageViewController: UIViewController, UIPageViewControllerDataSource,
         self.pageControl.numberOfPages = arrayOfAlerts.count
         self.pageControl.currentPage = 0
         self.pageControl.isEnabled = false
-        
-        self.configureConstraintsForPageControl()
     }
     
     fileprivate func configurePageViewController(){
@@ -213,10 +212,4 @@ class AlertPageViewController: UIViewController, UIPageViewControllerDataSource,
         self.addChild(self.pageController)
     }
     
-    //MARK: Called after notification orientation changement
-    func configureConstraintsForPageControl() {
-        let alertViewSizeHeight = UIScreen.main.bounds.height*alertview.percentageRatioHeight
-        let positionX = alertViewSizeHeight - (alertViewSizeHeight * 0.1) - 50
-        self.pageControl.frame = CGRect(x: 0, y: positionX, width: self.view.bounds.width, height: 50)
-    }
 }

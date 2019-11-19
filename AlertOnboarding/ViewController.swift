@@ -46,8 +46,10 @@ class ViewController: UIViewController, AlertOnboardingDelegate {
          
          */
         
-        self.alertView.imageContentMode = .scaleAspectFit
-        self.alertView.show()
+        alertView.imageContentMode = .scaleAspectFit
+        alertView.imageAspectRatio = 0.6
+        alertView.textAlignmentDescriptionLabel = .center
+        alertView.show()
         
     }
     

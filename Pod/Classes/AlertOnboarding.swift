@@ -23,7 +23,7 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     
     //FOR DESIGN    ------------------------
     open var buttonBottom: UIButton!
-    fileprivate var container: AlertPageViewController!
+    fileprivate var alertPageViewController: AlertPageViewController!
     open var background: UIView!
     
     //PUBLIC VARS   ------------------------
@@ -38,6 +38,7 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     @objc open var fontTitleLabel: UIFont? = UIFont(name: "Avenir-Heavy", size: 17);
     @objc open var fontDescriptionLabel: UIFont? = UIFont(name: "Avenir-Book", size: 13);
     @objc open var fontButtonText: UIFont? = UIFont(name: "Avenir-Black", size: 15);
+    @objc open var textAlignmentDescriptionLabel: NSTextAlignment = .natural
     
     @objc open var colorPageIndicator = UIColor(red: 171/255, green: 177/255, blue: 196/255, alpha: 1.0)
     @objc open var colorCurrentPageIndicator = UIColor(red: 118/255, green: 125/255, blue: 152/255, alpha: 1.0)
@@ -92,9 +93,9 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
         self.buttonBottom.setTitleColor(colorButtonText, for: UIControl.State())
         self.buttonBottom.setTitle(self.titleSkipButton, for: UIControl.State())
         
-        self.container = AlertPageViewController(arrayOfAlerts: arrayOfAlerts, alertView: self)
-        self.container.delegate = self
-        self.insertSubview(self.container.view, aboveSubview: self)
+        self.alertPageViewController = AlertPageViewController(arrayOfAlerts: arrayOfAlerts, alertView: self)
+        self.alertPageViewController.delegate = self
+        self.insertSubview(self.alertPageViewController.view, aboveSubview: self)
         self.insertSubview(self.buttonBottom, aboveSubview: self)
         
         // Only show once
@@ -127,9 +128,9 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     
     //MARK: Check if onboarding was skipped
     fileprivate func checkIfOnboardingWasSkipped(){
-        let currentStep = self.container.currentStep
-        if currentStep < (self.container.arrayOfAlerts.count - 1) && !self.container.isCompleted {
-            self.delegate?.alertOnboardingSkipped(currentStep, maxStep: self.container.maxStep)
+        let currentStep = self.alertPageViewController.currentStep
+        if currentStep < (self.alertPageViewController.arrayOfAlerts.count - 1) && !self.alertPageViewController.isCompleted {
+            self.delegate?.alertOnboardingSkipped(currentStep, maxStep: self.alertPageViewController.maxStep)
         }
         else {
             self.delegate?.alertOnboardingCompleted()
@@ -152,26 +153,41 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     }
     
     
-    fileprivate func configureConstraints(_ superView: UIView) {
+    fileprivate func configureConstraints(_ superview: UIView) {
+        translatesAutoresizingMaskIntoConstraints = false
+        buttonBottom.translatesAutoresizingMaskIntoConstraints = false
+        alertPageViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        background.translatesAutoresizingMaskIntoConstraints = false
+        alertPageViewController.pageControl.translatesAutoresizingMaskIntoConstraints = false
+        
         removeConstraints(constraints)
         buttonBottom.removeConstraints(buttonBottom.constraints)
-        container.view.removeConstraints(container.view.constraints)
+        alertPageViewController.view.removeConstraints(alertPageViewController.view.constraints)
         
-        equal(width: superView.widthAnchor, widthMultiplier: percentageRatioWidth,
-              height: superView.heightAnchor, heightMultiplier: percentageRatioHeight)
-        anchorCenterSuperview()
-        
-        buttonBottom.equal(width: widthAnchor, height: heightAnchor, heightMultiplier: 0.1)
-        buttonBottom.anchor(bottom: bottomAnchor)
-        buttonBottom.anchorCenterXToSuperview()
-        
-        //Constraints for container
-        container.view.equal(width: widthAnchor, height: heightAnchor, heightMultiplier: 0.9)
-        container.view.anchor(top: topAnchor)
-        container.view.anchorCenterXToSuperview()
-        
-        //Constraints for background
-        background.fillSuperview()
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalTo: superview.widthAnchor, multiplier: percentageRatioWidth),
+            heightAnchor.constraint(equalTo: superview.heightAnchor, multiplier: percentageRatioHeight),
+            centerXAnchor.constraint(equalTo: superview.centerXAnchor),
+            centerYAnchor.constraint(equalTo: superview.centerYAnchor),
+            
+            alertPageViewController.view.widthAnchor.constraint(equalTo: widthAnchor),
+            alertPageViewController.view.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.9),
+            alertPageViewController.view.topAnchor.constraint(equalTo: topAnchor),
+            alertPageViewController.view.centerXAnchor.constraint(equalTo: superview.centerXAnchor),
+            
+            background.leftAnchor.constraint(equalTo: superview.leftAnchor),
+            background.rightAnchor.constraint(equalTo: superview.rightAnchor),
+            background.topAnchor.constraint(equalTo: superview.topAnchor),
+            background.bottomAnchor.constraint(equalTo: superview.bottomAnchor),
+            
+            alertPageViewController.pageControl.centerXAnchor.constraint(equalTo: superview.centerXAnchor),
+            alertPageViewController.pageControl.bottomAnchor.constraint(equalTo: buttonBottom.topAnchor),
+            
+            buttonBottom.widthAnchor.constraint(equalTo: widthAnchor),
+            buttonBottom.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 0.1),
+            buttonBottom.bottomAnchor.constraint(equalTo: bottomAnchor),
+            buttonBottom.centerXAnchor.constraint(equalTo: superview.centerXAnchor),
+        ])
     }
     
     //MARK: FOR ANIMATIONS ---------------------------------
@@ -193,8 +209,8 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
                     () -> Void in
                     self.background.removeFromSuperview()
                     self.removeFromSuperview()
-                    self.container.removeFromParent()
-                    self.container.view.removeFromSuperview()
+                    self.alertPageViewController.removeFromParent()
+                    self.alertPageViewController.view.removeFromSuperview()
                 }
         })
     }
@@ -203,10 +219,10 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     
     @objc func onClick(){
         if (nextInsteadOfSkip) {
-            if let viewController = self.container.viewControllerAtIndex((self.container.pageController.viewControllers?[0] as! AlertChildPageViewController).pageIndex!-1)
+            if let viewController = self.alertPageViewController.viewControllerAtIndex((self.alertPageViewController.pageController.viewControllers?[0] as! AlertChildPageViewController).pageIndex!-1)
             {
-                self.container.pageController.setViewControllers([viewController], direction: UIPageViewController.NavigationDirection.forward, animated: true, completion: nil)
-                self.container.didMoveToPageIndex(pageIndex: (viewController as! AlertChildPageViewController).pageIndex)
+                self.alertPageViewController.pageController.setViewControllers([viewController], direction: UIPageViewController.NavigationDirection.forward, animated: true, completion: nil)
+                self.alertPageViewController.didMoveToPageIndex(pageIndex: (viewController as! AlertChildPageViewController).pageIndex)
                 
                 return;
             }
@@ -239,89 +255,6 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     @objc func onOrientationChange(){
         if let superview = self.superview {
             self.configureConstraints(superview)
-            self.container.configureConstraintsForPageControl()
-        }
-    }
-}
-
-extension UIView {
-    
-    func fillSuperview() {
-        translatesAutoresizingMaskIntoConstraints = false
-        if let superview = superview {
-            leftAnchor.constraint(equalTo: superview.leftAnchor).isActive = true
-            rightAnchor.constraint(equalTo: superview.rightAnchor).isActive = true
-            topAnchor.constraint(equalTo: superview.topAnchor).isActive = true
-            bottomAnchor.constraint(equalTo: superview.bottomAnchor).isActive = true
-        }
-    }
-    
-    func anchorCenterXToSuperview(constant: CGFloat = 0) {
-        translatesAutoresizingMaskIntoConstraints = false
-        if let anchor = superview?.centerXAnchor {
-            centerXAnchor.constraint(equalTo: anchor, constant: constant).isActive = true
-        }
-    }
-    
-    func anchorCenterYToSuperview(constant: CGFloat = 0) {
-        translatesAutoresizingMaskIntoConstraints = false
-        if let anchor = superview?.centerYAnchor {
-            centerYAnchor.constraint(equalTo: anchor, constant: constant).isActive = true
-        }
-    }
-    
-    func anchorCenterSuperview() {
-        anchorCenterXToSuperview()
-        anchorCenterYToSuperview()
-    }
-    
-    func anchor(top: NSLayoutYAxisAnchor? = nil, left: NSLayoutXAxisAnchor? = nil, bottom: NSLayoutYAxisAnchor? = nil, right: NSLayoutXAxisAnchor? = nil, topConstant: CGFloat = 0, leftConstant: CGFloat = 0, bottomConstant: CGFloat = 0, rightConstant: CGFloat = 0, widthConstant: CGFloat = 0, heightConstant: CGFloat = 0) {
-        translatesAutoresizingMaskIntoConstraints = false
-        
-        _ = anchorWithReturnAnchors(top, left: left, bottom: bottom, right: right, topConstant: topConstant, leftConstant: leftConstant, bottomConstant: bottomConstant, rightConstant: rightConstant, widthConstant: widthConstant, heightConstant: heightConstant)
-    }
-    
-    func anchorWithReturnAnchors(_ top: NSLayoutYAxisAnchor? = nil, left: NSLayoutXAxisAnchor? = nil, bottom: NSLayoutYAxisAnchor? = nil, right: NSLayoutXAxisAnchor? = nil, topConstant: CGFloat = 0, leftConstant: CGFloat = 0, bottomConstant: CGFloat = 0, rightConstant: CGFloat = 0, widthConstant: CGFloat = 0, heightConstant: CGFloat = 0) -> [NSLayoutConstraint] {
-        translatesAutoresizingMaskIntoConstraints = false
-        
-        var anchors = [NSLayoutConstraint]()
-        
-        if let top = top {
-            anchors.append(topAnchor.constraint(equalTo: top, constant: topConstant))
-        }
-        
-        if let left = left {
-            anchors.append(leftAnchor.constraint(equalTo: left, constant: leftConstant))
-        }
-        
-        if let bottom = bottom {
-            anchors.append(bottomAnchor.constraint(equalTo: bottom, constant: -bottomConstant))
-        }
-        
-        if let right = right {
-            anchors.append(rightAnchor.constraint(equalTo: right, constant: -rightConstant))
-        }
-        
-        if widthConstant > 0 {
-            anchors.append(widthAnchor.constraint(equalToConstant: widthConstant))
-        }
-        
-        if heightConstant > 0 {
-            anchors.append(heightAnchor.constraint(equalToConstant: heightConstant))
-        }
-        
-        anchors.forEach({$0.isActive = true})
-        
-        return anchors
-    }
-    
-    func equal(width: NSLayoutDimension? = nil, widthMultiplier: CGFloat? = 1.0, height: NSLayoutDimension? = nil, heightMultiplier: CGFloat? = 1.0) {
-        translatesAutoresizingMaskIntoConstraints = false
-        if let width = width {
-            widthAnchor.constraint(equalTo: width, multiplier: widthMultiplier!).isActive = true
-        }
-        if let height = height {
-            heightAnchor.constraint(equalTo: height, multiplier: heightMultiplier!).isActive = true
         }
     }
 }
