@@ -81,6 +81,10 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
         super.layoutSubviews()
     }
     
+    deinit {
+        print("Called deinit")
+    }
+    
     //-----------------------------------------------------------------------------------------
     // MARK: PUBLIC FUNCTIONS    --------------------------------------------------------------
     //-----------------------------------------------------------------------------------------
@@ -203,10 +207,14 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
         UIView.animate(withDuration: 0.2, delay: 0.0, options: UIView.AnimationOptions.curveEaseOut, animations: {
             self.alpha = 0.0
             }, completion: {
-                (finished: Bool) -> Void in
+                [weak self] finished in
+                guard let self = self else { return }
                 // On main thread
                 DispatchQueue.main.async {
                     () -> Void in
+                    self.stopInterceptingOrientationChanges()
+                    self.delegate = nil
+                    self.alertPageViewController.delegate = nil
                     self.background.removeFromSuperview()
                     self.removeFromSuperview()
                     self.alertPageViewController.removeFromParent()
@@ -250,6 +258,11 @@ open class AlertOnboarding: UIView, AlertPageViewDelegate {
     fileprivate func interceptOrientationChange(){
         UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         NotificationCenter.default.addObserver(self, selector: #selector(AlertOnboarding.onOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+    }
+    
+    fileprivate func stopInterceptingOrientationChanges() {
+        UIDevice.current.endGeneratingDeviceOrientationNotifications()
+        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
     @objc func onOrientationChange(){

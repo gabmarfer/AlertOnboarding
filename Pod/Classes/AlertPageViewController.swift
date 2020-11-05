@@ -43,7 +43,9 @@ class AlertPageViewController: UIViewController, UIPageViewControllerDataSource,
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if (alertview.nextInsteadOfSkip) {
+        if arrayOfAlerts.count == 1 {
+            alertview.buttonBottom.setTitle(alertview.titleGotItButton, for: UIControl.State())
+        } else if alertview.nextInsteadOfSkip {
             self.alertview.buttonBottom.setTitle(alertview.titleNextButton, for: UIControl.State())
         }
         
@@ -185,6 +187,7 @@ class AlertPageViewController: UIViewController, UIPageViewControllerDataSource,
         self.pageControl.numberOfPages = arrayOfAlerts.count
         self.pageControl.currentPage = 0
         self.pageControl.isEnabled = false
+        self.pageControl.hidesForSinglePage = true
     }
     
     fileprivate func configurePageViewController(){
